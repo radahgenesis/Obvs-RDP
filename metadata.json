@@ -1,0 +1,6 @@
+{
+  "name": "OBVS REMOTE",
+  "description": "A high-performance secure workspace manager and network scanner to monitor and interact with multiple remote systems, featuring interactive terminals, GUI desktops, and Recharts monitoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
