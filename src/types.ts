@@ -35,6 +35,13 @@ export interface RemoteMachine {
   tags?: string[];
   cpuAlertThreshold?: number;
   ramAlertThreshold?: number;
+  location?: {
+    city: string;
+    country: string;
+    lat: number;
+    lng: number;
+    isCustom?: boolean;
+  };
   metrics: SystemMetrics;
   logs: string[];
   terminalHistory: { command: string; output: string; dir: string; timestamp: string }[];

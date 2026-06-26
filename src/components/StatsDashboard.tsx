@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { RemoteMachine, MachineOS, ConnectionProtocol, ActivityLog } from "../types";
 import NetworkScanner from "./NetworkScanner";
+import GlobalMapView from "./GlobalMapView";
 import {
   Server,
   Activity,
@@ -155,6 +156,10 @@ export default function StatsDashboard({
   const [editTagsString, setEditTagsString] = useState("");
   const [editCpuLimit, setEditCpuLimit] = useState(80);
   const [editRamLimit, setEditRamLimit] = useState(85);
+  const [editCity, setEditCity] = useState("");
+  const [editCountry, setEditCountry] = useState("");
+  const [editLat, setEditLat] = useState<number>(0);
+  const [editLng, setEditLng] = useState<number>(0);
 
   const startEditing = (m: RemoteMachine) => {
     setEditingMachineId(m.id);
@@ -163,6 +168,10 @@ export default function StatsDashboard({
     setEditCpuLimit(m.cpuAlertThreshold !== undefined ? m.cpuAlertThreshold : 80);
     setEditRamLimit(m.ramAlertThreshold !== undefined ? m.ramAlertThreshold : 85);
     setEditTagsString("");
+    setEditCity(m.location?.city || "");
+    setEditCountry(m.location?.country || "");
+    setEditLat(m.location?.lat || 0);
+    setEditLng(m.location?.lng || 0);
   };
 
   const saveEditing = (id: string) => {
@@ -170,7 +179,14 @@ export default function StatsDashboard({
       group: editGroup.trim() || "Development",
       tags: editTags,
       cpuAlertThreshold: editCpuLimit,
-      ramAlertThreshold: editRamLimit
+      ramAlertThreshold: editRamLimit,
+      location: {
+        city: editCity.trim(),
+        country: editCountry.trim(),
+        lat: Number(editLat) || 0,
+        lng: Number(editLng) || 0,
+        isCustom: true
+      }
     });
     setEditingMachineId(null);
   };
@@ -399,6 +415,12 @@ export default function StatsDashboard({
         </div>
       )}
 
+      {/* Global Infrastructure Map View */}
+      <GlobalMapView 
+        machines={machines}
+        onSelectMachine={onSelectMachine}
+      />
+
       {/* Filters & Search Toolbar */}
       <div className="bg-slate-950/50 p-4 border border-white/5 mb-6 flex flex-col gap-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -539,6 +561,12 @@ export default function StatsDashboard({
                     <Tag className="w-2.5 h-2.5 text-slate-500" /> {tag}
                   </span>
                 ))}
+                {m.location && (
+                  <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950/20 border border-emerald-900/30 px-1.5 py-0.5 uppercase tracking-wider flex items-center gap-1 rounded" title={`Lat: ${m.location.lat.toFixed(4)}, Lng: ${m.location.lng.toFixed(4)}`}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    {m.location.city}, {m.location.country}
+                  </span>
+                )}
               </div>
 
               {/* Protocol, Tunnel security labels */}
@@ -673,6 +701,68 @@ export default function StatsDashboard({
                         onChange={(e) => setEditRamLimit(parseInt(e.target.value))}
                         className="w-full accent-emerald-500 bg-white/5 h-1 rounded cursor-pointer"
                       />
+                    </div>
+                  </div>
+
+                  {/* Geographical Location Coordinates */}
+                  <div className="border-t border-white/5 pt-2.5 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] uppercase tracking-wider text-slate-400 font-mono font-bold flex items-center gap-1">
+                        <Network className="w-3 h-3 text-indigo-400" /> Geographical Location
+                      </span>
+                      {m.location?.isCustom && (
+                        <span className="text-[7px] bg-indigo-500/10 text-indigo-300 px-1 py-0.5 rounded border border-indigo-500/20 font-mono uppercase">
+                          Manual Override
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col gap-0.5">
+                        <label className="text-[8px] uppercase tracking-wider text-slate-500 font-mono">City</label>
+                        <input
+                          type="text"
+                          value={editCity}
+                          onChange={(e) => setEditCity(e.target.value)}
+                          className="bg-black border border-white/10 px-2 py-0.5 text-[10px] text-white focus:outline-none focus:border-indigo-500 font-mono rounded"
+                          placeholder="e.g. Frankfurt"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <label className="text-[8px] uppercase tracking-wider text-slate-500 font-mono">Country</label>
+                        <input
+                          type="text"
+                          value={editCountry}
+                          onChange={(e) => setEditCountry(e.target.value)}
+                          className="bg-black border border-white/10 px-2 py-0.5 text-[10px] text-white focus:outline-none focus:border-indigo-500 font-mono rounded"
+                          placeholder="e.g. Germany"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col gap-0.5">
+                        <label className="text-[8px] uppercase tracking-wider text-slate-500 font-mono">Latitude</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={editLat}
+                          onChange={(e) => setEditLat(parseFloat(e.target.value) || 0)}
+                          className="bg-black border border-white/10 px-2 py-0.5 text-[10px] text-white focus:outline-none focus:border-indigo-500 font-mono rounded"
+                          placeholder="e.g. 50.1109"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <label className="text-[8px] uppercase tracking-wider text-slate-500 font-mono">Longitude</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={editLng}
+                          onChange={(e) => setEditLng(parseFloat(e.target.value) || 0)}
+                          className="bg-black border border-white/10 px-2 py-0.5 text-[10px] text-white focus:outline-none focus:border-indigo-500 font-mono rounded"
+                          placeholder="e.g. 8.6821"
+                        />
+                      </div>
                     </div>
                   </div>
 

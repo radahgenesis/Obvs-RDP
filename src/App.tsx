@@ -8,6 +8,7 @@ import CopilotDrawer from "./components/CopilotDrawer";
 import SettingsPanel from "./components/SettingsPanel";
 import { INITIAL_MACHINES } from "./data/initialMachines";
 import { RemoteMachine, CopilotMessage, ActivityLog } from "./types";
+import { fetchGeoForIp } from "./utils/geo";
 import { 
   Lock, 
   Unlock, 
@@ -75,6 +76,39 @@ export default function App() {
       setMachines(INITIAL_MACHINES);
     }
   }, []);
+
+  // Background resolver for resolving missing machine geolocations
+  useEffect(() => {
+    if (machines.length === 0) return;
+    
+    const missingGeo = machines.some(m => !m.location);
+    if (!missingGeo) return;
+
+    const resolveMissingGeos = async () => {
+      let changed = false;
+      const updatedList = await Promise.all(
+        machines.map(async (m) => {
+          if (!m.location) {
+            try {
+              const geo = await fetchGeoForIp(m.ip, m.name);
+              changed = true;
+              return { ...m, location: geo };
+            } catch (err) {
+              console.error(`Failed to resolve geo for ${m.ip}:`, err);
+              return m;
+            }
+          }
+          return m;
+        })
+      );
+
+      if (changed) {
+        saveMachines(updatedList);
+      }
+    };
+
+    resolveMissingGeos();
+  }, [machines]);
 
   // Sync machines database updates
   const saveMachines = (updated: RemoteMachine[]) => {
