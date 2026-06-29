@@ -27,7 +27,8 @@ import {
   Bell,
   X,
   Folder,
-  Settings
+  Settings,
+  Zap
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -300,6 +301,12 @@ export default function StatsDashboard({
   const handleFetchLogs = async (machineId: string) => {
     setActionLoadingId(machineId + "-logs");
     await onRunAction(machineId, "fetch-logs");
+    setActionLoadingId(null);
+  };
+
+  const handleWakeOnLan = async (machineId: string, mac?: string) => {
+    setActionLoadingId(machineId + "-wol");
+    await onRunAction(machineId, "wol", mac);
     setActionLoadingId(null);
   };
 
@@ -864,31 +871,47 @@ export default function StatsDashboard({
 
               {/* Action buttons */}
               <div className="grid grid-cols-2 gap-2 mt-auto">
-                {/* Interactive VNC/RDP Desktop Simulator */}
-                <button
-                  disabled={!isOnline}
-                  onClick={() => onSelectMachine(m, "desktop")}
-                  className={`py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
-                    isOnline
-                      ? "bg-indigo-600 hover:bg-white hover:text-black text-white shadow-lg border border-transparent"
-                      : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
-                  }`}
-                >
-                  Desktop GUI
-                </button>
+                {!isOnline ? (
+                  <button
+                    onClick={() => handleWakeOnLan(m.id, m.mac)}
+                    disabled={actionLoadingId === m.id + "-wol" || m.status === "connecting"}
+                    className="col-span-2 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800/40 text-white text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg border border-transparent flex items-center justify-center gap-1.5"
+                    title={`Send WoL Magic Packet to physical interface MAC ${m.mac || "N/A"}`}
+                  >
+                    <Zap className="w-3.5 h-3.5 text-emerald-200 animate-pulse" />
+                    {actionLoadingId === m.id + "-wol" || m.status === "connecting"
+                      ? "Sending Packet..."
+                      : "Wake-on-LAN (WoL)"}
+                  </button>
+                ) : (
+                  <>
+                    {/* Interactive VNC/RDP Desktop Simulator */}
+                    <button
+                      disabled={!isOnline}
+                      onClick={() => onSelectMachine(m, "desktop")}
+                      className={`py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                        isOnline
+                          ? "bg-indigo-600 hover:bg-white hover:text-black text-white shadow-lg border border-transparent"
+                          : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
+                      }`}
+                    >
+                      Desktop GUI
+                    </button>
 
-                {/* Secure Shell terminal console */}
-                <button
-                  disabled={!isOnline}
-                  onClick={() => onSelectMachine(m, "terminal")}
-                  className={`py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
-                    isOnline
-                      ? "bg-white/5 border border-white/10 text-white hover:bg-white hover:text-black"
-                      : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
-                  }`}
-                >
-                  SSH Terminal
-                </button>
+                    {/* Secure Shell terminal console */}
+                    <button
+                      disabled={!isOnline}
+                      onClick={() => onSelectMachine(m, "terminal")}
+                      className={`py-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                        isOnline
+                          ? "bg-white/5 border border-white/10 text-white hover:bg-white hover:text-black"
+                          : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
+                      }`}
+                    >
+                      SSH Terminal
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Extra Utility Action Controls (Power actions / logs / settings) */}

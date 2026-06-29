@@ -46,6 +46,7 @@ export interface RemoteMachine {
   logs: string[];
   terminalHistory: { command: string; output: string; dir: string; timestamp: string }[];
   fileSystem: RemoteFile[];
+  mac?: string;
 }
 
 export interface CopilotMessage {

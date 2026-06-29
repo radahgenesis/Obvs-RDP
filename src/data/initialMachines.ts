@@ -2,6 +2,36 @@ import { RemoteMachine } from "../types";
 
 export const INITIAL_MACHINES: RemoteMachine[] = [
   {
+    id: "mach-localhost",
+    name: "localhost-workspace",
+    ip: "127.0.0.1",
+    port: 3000,
+    protocol: "ssh",
+    username: "developer",
+    credentialsType: "password",
+    password: "••••••••••••",
+    status: "online",
+    os: "linux",
+    group: "Local Workspace",
+    tags: ["live", "development", "workspace"],
+    metrics: {
+      cpu: 10,
+      ram: 40,
+      disk: 25,
+      networkIn: 5,
+      networkOut: 8,
+      uptime: "0 days, 01:20:45"
+    },
+    logs: [
+      "Starting MultiDesk Local Server...",
+      "Server active and listening on port 3000",
+      "Ready to accept SSH, SFTP, and telemetry requests"
+    ],
+    terminalHistory: [],
+    fileSystem: [],
+    mac: "02:42:AC:11:00:02"
+  },
+  {
     id: "mach-ubuntu-prod",
     name: "ubuntu-prod-app-01",
     ip: "104.198.14.88",
@@ -46,7 +76,7 @@ export const INITIAL_MACHINES: RemoteMachine[] = [
      /ssssssssssssssssssssssssss/        Disk: 44GB / 100GB (44%)
       -+ssssssssssssssssssssss+-
         \`:+ssssssssssssssssss+:\`
-            .-/+oossssoo+/-.`,
+            .-/+oossssoo+/\`-.`,
         dir: "/home/deployer",
         timestamp: "2026-06-25T14:20:00Z"
       }
@@ -78,7 +108,8 @@ export const INITIAL_MACHINES: RemoteMachine[] = [
         content: "2026-06-26 00:01:10 INFO [main] Starting Server on port 8080\n2026-06-26 00:01:12 INFO [db] Connected to PostgreSQL at 10.0.1.20:5432\n2026-06-26 00:01:15 INFO [redis] Handshake successful. Cluster ready.\n2026-06-26 00:05:00 WARN [api] Rate limit reached for IP 185.220.101.4",
         size: "244 B"
       }
-    ]
+    ],
+    mac: "00:15:5D:01:A2:0F"
   },
   {
     id: "mach-win-ad",
@@ -139,7 +170,54 @@ Running  Kdc                Kerberos Key Distribution Center`,
         content: "# Active Directory Database Backup Script\nImport-Module ActiveDirectory\n$BackupPath = '\\\\SECURE-NAS\\ad_backups\\'\nWrite-Output 'Backing up Active Directory Domain Services database...'\n# Mock: SystemStateBackup -BackupTarget $BackupPath -Quiet\nWrite-Output 'Backup completed successfully.'",
         size: "410 B"
       }
-    ]
+    ],
+    mac: "00:15:5D:04:B1:33"
+  },
+  {
+    id: "mach-win-client",
+    name: "win-11-workstation-01",
+    ip: "192.168.10.135",
+    port: 3389,
+    protocol: "rdp",
+    username: "OBVS\\administrator",
+    credentialsType: "password",
+    password: "••••••••••••",
+    status: "online",
+    os: "windows",
+    group: "Corporate Workstations",
+    metrics: {
+      cpu: 18,
+      ram: 54,
+      disk: 42,
+      networkIn: 45,
+      networkOut: 65,
+      uptime: "3 days, 05:12:19"
+    },
+    logs: [
+      "User OBVS\\administrator initiated RDP connection from 192.168.10.5",
+      "Network connection established using TLS 1.3 encryption.",
+      "Display settings adjusted: 1440x900, 32-bit color depth.",
+      "Local printer HP Laserjet redirection initiated.",
+      "Clipboard synchronization enabled with client workstation."
+    ],
+    terminalHistory: [
+      {
+        command: "whoami",
+        output: "OBVS\\administrator",
+        dir: "C:\\Users\\administrator",
+        timestamp: "2026-06-25T19:00:00Z"
+      }
+    ],
+    fileSystem: [
+      {
+        name: "workstation-instructions.txt",
+        type: "file",
+        path: "C:\\Users\\administrator\\workstation-instructions.txt",
+        content: "OBVS CORPORATE WORKSTATION INSTRUCTIONS:\n1. VPN tunnel must be enabled before accessing production grid.\n2. Remote access to AD controller available via RDP profile 'Jump Server'.\n3. Do not store sensitive configuration locally without using Vault.",
+        size: "280 B"
+      }
+    ],
+    mac: "3C:7C:3F:A1:C9:82"
   },
   {
     id: "mach-macos-build",
@@ -184,7 +262,8 @@ Running  Kdc                Kerberos Key Distribution Center`,
         content: "#!/bin/bash\nset -e\nexport PATH=/opt/homebrew/bin:$PATH\ncd /Users/ci-builder/workspace/app-mobile\nnpm install && npm run build\nfastlane build_and_sign_ios",
         size: "180 B"
       }
-    ]
+    ],
+    mac: "AC:DE:48:00:11:22"
   },
   {
     id: "mach-alpine-db",
@@ -221,6 +300,7 @@ Running  Kdc                Kerberos Key Distribution Center`,
         content: "bind 127.0.0.1 10.0.8.22\nport 6379\nprotected-mode yes\nmaxmemory 4gb\nmaxmemory-policy allkeys-lru\nsave 900 1\nsave 300 10",
         size: "120 B"
       }
-    ]
+    ],
+    mac: "08:00:27:E1:92:BC"
   }
 ];

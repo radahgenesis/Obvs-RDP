@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { RemoteMachine, RemoteFile } from "../types";
+import SysAdminSuiteWindow from "./SysAdminSuiteWindow";
 import {
   Terminal as TerminalIcon,
   FolderOpen,
@@ -18,7 +19,8 @@ import {
   RefreshCw,
   Terminal,
   Shield,
-  HelpCircle
+  HelpCircle,
+  Sliders
 } from "lucide-react";
 
 interface DesktopSimulatorProps {
@@ -30,14 +32,15 @@ interface DesktopSimulatorProps {
 export default function DesktopSimulator({ machine, onClose, onRunAction }: DesktopSimulatorProps) {
   // Desktop environment states
   const [openApps, setOpenApps] = useState({
-    terminal: true,
+    terminal: false,
     fileManager: false,
     sysMonitor: false,
     browser: false,
-    txtEditor: false
+    txtEditor: false,
+    sysAdminSuite: true
   });
   
-  const [activeApp, setActiveApp] = useState<"terminal" | "fileManager" | "sysMonitor" | "browser" | "txtEditor" | null>("terminal");
+  const [activeApp, setActiveApp] = useState<"terminal" | "fileManager" | "sysMonitor" | "browser" | "txtEditor" | "sysAdminSuite" | null>("sysAdminSuite");
   const [terminalHistory, setTerminalHistory] = useState<{ cmd: string; output: string }[]>([
     { cmd: "system-connect", output: `Connected securely to Remote Desk [${machine.ip}:${machine.port}] via ${machine.protocol.toUpperCase()}\nType 'help' to see available remote commands.` }
   ]);
@@ -408,6 +411,18 @@ export default function DesktopSimulator({ machine, onClose, onRunAction }: Desk
         {/* Desktop Icons */}
         <div className="flex flex-col gap-6 items-center">
           
+          {/* SysAdmin Suite Launcher */}
+          <button 
+            onDoubleClick={() => openApp("sysAdminSuite")}
+            onClick={() => openApp("sysAdminSuite")}
+            className="group flex flex-col items-center gap-1.5 w-18 text-center text-white"
+          >
+            <div className="w-12 h-12 rounded-xl bg-indigo-600/90 border border-indigo-400 flex items-center justify-center shadow-lg group-hover:scale-105 transition-all ring-2 ring-indigo-400/40">
+              <Sliders className="w-6 h-6 text-white animate-pulse" />
+            </div>
+            <span className="text-[11px] font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight text-indigo-300">SysAdmin Suite</span>
+          </button>
+
           {/* Terminal Launcher */}
           <button 
             onDoubleClick={() => openApp("terminal")}
@@ -800,6 +815,14 @@ export default function DesktopSimulator({ machine, onClose, onRunAction }: Desk
           </div>
         )}
 
+        {openApps.sysAdminSuite && (
+          <SysAdminSuiteWindow
+            machine={machine}
+            onClose={() => closeApp("sysAdminSuite")}
+            onRunAction={onRunAction}
+          />
+        )}
+
       </div>
 
       {/* --- TASKBARS PER SYSTEM TYPE --- */}
@@ -820,6 +843,15 @@ export default function DesktopSimulator({ machine, onClose, onRunAction }: Desk
             </button>
             <div className="w-[1px] h-6 bg-slate-700/60 mx-1"></div>
             
+            <button 
+              onClick={() => openApp("sysAdminSuite")}
+              className={`w-9 h-9 flex items-center justify-center rounded transition relative ${openApps.sysAdminSuite ? "bg-white/10" : "hover:bg-white/5"}`}
+              title="SysAdmin Operations Suite"
+            >
+              <Sliders className="w-5 h-5 text-indigo-400" />
+              {openApps.sysAdminSuite && <div className="absolute bottom-0 w-1 h-1 bg-indigo-400 rounded-full"></div>}
+            </button>
+
             <button 
               onClick={() => openApp("terminal")}
               className={`w-9 h-9 flex items-center justify-center rounded transition relative ${openApps.terminal ? "bg-white/10" : "hover:bg-white/5"}`}
@@ -865,6 +897,17 @@ export default function DesktopSimulator({ machine, onClose, onRunAction }: Desk
       {/* macOS Dock at the bottom */}
       {machine.os === "macos" && (
         <div className={getTaskbarStyle()}>
+          <button 
+            onClick={() => openApp("sysAdminSuite")}
+            className="group relative flex flex-col items-center hover:-translate-y-2 transition-transform duration-200"
+            title="SysAdmin Operations Suite"
+          >
+            <div className="w-11 h-11 rounded-xl bg-indigo-600 border border-indigo-400 flex items-center justify-center">
+              <Sliders className="w-5 h-5 text-white" />
+            </div>
+            {openApps.sysAdminSuite && <span className="absolute -bottom-1 text-[16px] text-white/80">•</span>}
+          </button>
+
           <button 
             onClick={() => openApp("terminal")}
             className="group relative flex flex-col items-center hover:-translate-y-2 transition-transform duration-200"

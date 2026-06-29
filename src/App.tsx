@@ -8,6 +8,10 @@ import CopilotDrawer from "./components/CopilotDrawer";
 import SettingsPanel from "./components/SettingsPanel";
 import VpnSetupPanel from "./components/VpnSetupPanel";
 import SystemMonitoringPanel from "./components/SystemMonitoringPanel";
+import RdpConnectionDialog from "./components/RdpConnectionDialog";
+import CredentialManager from "./components/CredentialManager";
+import SftpFileExplorer from "./components/SftpFileExplorer";
+import PowerShellConsole from "./components/PowerShellConsole";
 import { INITIAL_MACHINES } from "./data/initialMachines";
 import { RemoteMachine, CopilotMessage, ActivityLog } from "./types";
 import { fetchGeoForIp } from "./utils/geo";
@@ -31,6 +35,7 @@ export default function App() {
   // Immersive session overlay states
   const [selectedMachineForSession, setSelectedMachineForSession] = useState<RemoteMachine | null>(null);
   const [sessionMode, setSessionMode] = useState<"terminal" | "desktop" | null>(null);
+  const [rdpMachineToConnect, setRdpMachineToConnect] = useState<RemoteMachine | null>(null);
 
   // Security master PIN & Locks
   const [masterPin, setMasterPin] = useState<string>("");
@@ -41,14 +46,22 @@ export default function App() {
 
   // Load initial settings and registered hosts
   useEffect(() => {
+    let active = true;
     try {
       const storedMachines = localStorage.getItem("multidesk_machines");
+      let currentMachinesList = INITIAL_MACHINES;
       if (storedMachines) {
-        setMachines(JSON.parse(storedMachines));
+        const parsed = JSON.parse(storedMachines);
+        const hasLocalhost = parsed.some((m: any) => m.id === "mach-localhost");
+        if (!hasLocalhost) {
+          currentMachinesList = [INITIAL_MACHINES[0], ...parsed];
+        } else {
+          currentMachinesList = parsed;
+        }
       } else {
-        setMachines(INITIAL_MACHINES);
         localStorage.setItem("multidesk_machines", JSON.stringify(INITIAL_MACHINES));
       }
+      setMachines(currentMachinesList);
 
       const storedLogs = localStorage.getItem("obvs_activity_logs");
       if (storedLogs) {
@@ -77,6 +90,54 @@ export default function App() {
       console.error("Local Storage configuration load error:", e);
       setMachines(INITIAL_MACHINES);
     }
+
+    // Function to fetch and sync real localhost machine data
+    const syncLocalhostData = async () => {
+      try {
+        const [metricsRes, filesRes] = await Promise.all([
+          fetch("/api/local/metrics"),
+          fetch("/api/local/files")
+        ]);
+
+        if (metricsRes.ok && filesRes.ok) {
+          const liveMetrics = await metricsRes.json();
+          const liveFiles = await filesRes.json();
+
+          if (!active) return;
+
+          setMachines((prev) => {
+            const updated = prev.map((m) => {
+              if (m.id === "mach-localhost") {
+                return {
+                  ...m,
+                  metrics: {
+                    ...m.metrics,
+                    ...liveMetrics
+                  },
+                  fileSystem: liveFiles
+                };
+              }
+              return m;
+            });
+            localStorage.setItem("multidesk_machines", JSON.stringify(updated));
+            return updated;
+          });
+        }
+      } catch (err) {
+        console.error("Failed to connect or fetch live localhost data:", err);
+      }
+    };
+
+    // Initial sync
+    syncLocalhostData();
+
+    // Regular interval loop every 10 seconds to fetch real metrics & files
+    const interval = setInterval(syncLocalhostData, 10000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Background resolver for resolving missing machine geolocations
@@ -205,9 +266,13 @@ export default function App() {
       setPinPromptOpen(true);
       return;
     }
-    setSelectedMachineForSession(machine);
-    setSessionMode(mode);
-    addActivityLog("SESSION_START", machine.name, `Opened visual ${mode.toUpperCase()} session tunnel to ${machine.name}`, "info");
+    if (mode === "desktop" && machine.protocol === "rdp") {
+      setRdpMachineToConnect(machine);
+    } else {
+      setSelectedMachineForSession(machine);
+      setSessionMode(mode);
+      addActivityLog("SESSION_START", machine.name, `Opened visual ${mode.toUpperCase()} session tunnel to ${machine.name}`, "info");
+    }
   };
 
   // Perform actual system control actions via express server APIs
@@ -243,6 +308,32 @@ export default function App() {
                   return restored;
                 });
               }, 4000);
+            } else if (action === "wol") {
+              updatedStatus = "connecting";
+              addActivityLog("WOL_INIT", hostName, `Sending magic packet (MAC: ${m.mac || "08:00:27:E1:92:BC"}) via system control API. Node waking up...`, "warning");
+              setTimeout(() => {
+                // Return server status back to online after boot completes
+                setMachines((currentMachines) => {
+                  const restored = currentMachines.map((x) => 
+                    x.id === machineId ? { 
+                      ...x, 
+                      status: "online" as const,
+                      metrics: {
+                        ...x.metrics,
+                        cpu: 12,
+                        ram: 35,
+                        disk: 25,
+                        networkIn: 5,
+                        networkOut: 5,
+                        uptime: "0 days, 00:00:01"
+                      }
+                    } : x
+                  );
+                  localStorage.setItem("multidesk_machines", JSON.stringify(restored));
+                  addActivityLog("WOL_COMPLETE", hostName, `Node completed boot phase via WoL. Heartbeat established: ONLINE`, "success");
+                  return restored;
+                });
+              }, 5000);
             } else if (action === "fetch-logs") {
               addActivityLog("LOGS_RETRIEVED", hostName, `System logs fetched successfully: received ${data.logOutput.length} characters of telemetry data`, "success");
             } else {
@@ -427,6 +518,29 @@ export default function App() {
           />
         )}
 
+        {currentTab === "credentials" && (
+          <CredentialManager
+            machines={machines}
+            onUpdateMachine={handleUpdateMachine}
+          />
+        )}
+
+        {currentTab === "explorer" && (
+          <SftpFileExplorer
+            machines={machines}
+            onUpdateMachineFileSystem={(machineId, updatedFiles) => {
+              handleUpdateMachine(machineId, { fileSystem: updatedFiles });
+            }}
+          />
+        )}
+
+        {currentTab === "powershell" && (
+          <PowerShellConsole
+            machines={machines}
+            onRunAction={handleRunAction}
+          />
+        )}
+
       </div>
 
       {/* 5. Security Vault Master Pin Confirm Overlay Modal */}
@@ -477,6 +591,21 @@ export default function App() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* 6. Remote Desktop Connection Login Dialog Modal */}
+      {rdpMachineToConnect && (
+        <RdpConnectionDialog
+          machine={rdpMachineToConnect}
+          onClose={() => setRdpMachineToConnect(null)}
+          onConnect={(updatedFields) => {
+            handleUpdateMachine(rdpMachineToConnect.id, updatedFields);
+            setSelectedMachineForSession({ ...rdpMachineToConnect, ...updatedFields });
+            setSessionMode("desktop");
+            addActivityLog("SESSION_START", rdpMachineToConnect.name, `Opened visual RDP session tunnel to ${rdpMachineToConnect.name}`, "info");
+            setRdpMachineToConnect(null);
+          }}
+        />
       )}
 
     </div>

@@ -11,7 +11,9 @@ import {
   Server,
   Activity,
   UserCheck,
-  Network
+  Network,
+  FolderOpen,
+  Key
 } from "lucide-react";
 import { RemoteMachine } from "../types";
 
@@ -39,6 +41,9 @@ export default function Sidebar({
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "workspace", label: "Remote Grid View", icon: Grid3X3, badge: onlineCount },
     { id: "terminal", label: "Global Terminals", icon: Terminal },
+    { id: "powershell", label: "PowerShell Console", icon: Terminal },
+    { id: "explorer", label: "SFTP File Explorer", icon: FolderOpen },
+    { id: "credentials", label: "Credential Vault", icon: Key },
     { id: "vpn", label: "VPN Tunnel Manager", icon: Network },
     { id: "monitoring", label: "Metrics & Monitors", icon: Activity },
     { id: "copilot", label: "Gemini Copilot", icon: BotMessageSquare, highlight: true },
