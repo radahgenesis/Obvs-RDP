@@ -6,6 +6,8 @@ import TerminalClient from "./components/TerminalClient";
 import DesktopSimulator from "./components/DesktopSimulator";
 import CopilotDrawer from "./components/CopilotDrawer";
 import SettingsPanel from "./components/SettingsPanel";
+import VpnSetupPanel from "./components/VpnSetupPanel";
+import SystemMonitoringPanel from "./components/SystemMonitoringPanel";
 import { INITIAL_MACHINES } from "./data/initialMachines";
 import { RemoteMachine, CopilotMessage, ActivityLog } from "./types";
 import { fetchGeoForIp } from "./utils/geo";
@@ -410,6 +412,18 @@ export default function App() {
             onDeleteMachine={handleDeleteMachine}
             hasSetPin={!!masterPin}
             onSetPin={handleSetPin}
+          />
+        )}
+
+        {currentTab === "vpn" && (
+          <VpnSetupPanel
+            machines={machines}
+          />
+        )}
+
+        {currentTab === "monitoring" && (
+          <SystemMonitoringPanel
+            machines={machines}
           />
         )}
 
